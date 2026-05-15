@@ -3,17 +3,36 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ytpld"
-version = "v1.1.1"
-description = "YouTube playlist downloader"
+name = "ytplst"
+version = "1.1.1"
+description = "YouTube playlist Sync Thing"
 readme = "README.md"
 authors = [ { name = "Dark_Zoul" } ]
 license = { file = "LICENSE" }
-keywords = ["youtube", "yt-dlp", "playlist", "downloader"]
+keywords = ["youtube", "yt-dlp", "playlist", "sync"]
+requires-python = ">=3.10"
+dependencies = [
+	"yt-dlp>=2026.3.17",
+]
+[project.optional-dependencies]
+gui = [
+    "PySide6"
+]
+dev = [
+    "pytest",
+    "ruff",
+    "black"
+]
 
 [project.urls]
-"Home" = "https://git.darkzoul.org/dark_zoul/youtube-playlist-downloader"
+Home = "https://github.com/darkzoul5/YoutubePlaylistSyncThing"
+
+[project.scripts]
+ytplst = "ytplst.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["*"]
+include = ["ytplst*"]
