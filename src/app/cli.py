@@ -43,7 +43,14 @@ def main(argv: list[str] | None = None) -> int:
     for pl in playlists:
         url = pl.get("url")
         pid = extract_playlist_id(url) or (url or "")
-        actions = service.sync_from_config(pl)
+        try:
+            actions = service.sync_from_config(pl)
+        except ImportError as e:
+            msg = str(e)
+            if "yt_dlp" in msg or "yt-dlp" in msg:
+                print("yt-dlp Python package is required. Install with: pip install -U yt-dlp")
+                return 2
+            raise
         counts: dict[str, int] = {}
         for a in actions:
             counts[a.type.name] = counts.get(a.type.name, 0) + 1

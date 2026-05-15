@@ -10,7 +10,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "download_mode": "audio",
     "max_video_quality": "1080p",
     "save_path": "./downloads",
-    "yt_dlp_path": "yt-dlp",
     "ffmpeg_path": "ffmpeg",
 }
 
