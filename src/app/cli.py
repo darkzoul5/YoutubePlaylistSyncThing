@@ -88,7 +88,11 @@ def main(argv: list[str] | None = None) -> int:
         summary = ", ".join(f"{k}:{v}" for k, v in sorted(counts.items()))
         print(f"Playlist {pid}: {len(actions)} actions → {summary}")
         if args.apply and actions:
-            asyncio.run(executor.execute(actions, pl))
+            try:
+                asyncio.run(executor.execute(actions, pl))
+            except DependencyError as e:
+                print(f"ERROR: {e}")
+                return 2
             db.set_playlist_last_sync(pid)
             print(f"Applied actions for {pid}.")
 

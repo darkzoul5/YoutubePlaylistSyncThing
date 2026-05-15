@@ -37,7 +37,11 @@ def bootstrap(db_path: Path | None = None) -> None:
                 print(f"Plan → {summary}")
                 # Execute
                 import asyncio
-                asyncio.run(executor.execute(actions, pl))
+                try:
+                    asyncio.run(executor.execute(actions, pl))
+                except DependencyError as e:
+                    print(f"ERROR: {e}")
+                    continue
                 # Post summary (no DB readback yet)
                 pid = extract_playlist_id(pl.get('url', '')) or pl.get('url', '')
                 db.set_playlist_last_sync(pid)

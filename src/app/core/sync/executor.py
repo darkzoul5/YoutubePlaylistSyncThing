@@ -12,6 +12,7 @@ from ..sync.reorder import safe_multi_rename
 from ..database.db import Database
 from ..utils.yt import extract_playlist_id
 from ..events.event_bus import EventBus
+from ..utils.deps import ensure_ffmpeg_available, ensure_yt_dlp_available
 
 
 class ActionExecutor:
@@ -21,6 +22,8 @@ class ActionExecutor:
         self.bus = event_bus
 
     async def execute(self, actions: Iterable[SyncAction], playlist_cfg: dict) -> None:
+        self._preflight_dependencies(actions, playlist_cfg)
+
         save_path = Path(playlist_cfg.get("save_path", "./downloads")).resolve()
         mode = playlist_cfg.get("download_mode", "audio")
 
@@ -38,6 +41,23 @@ class ActionExecutor:
 
         # Finally, perform downloads concurrently
         await self._apply_downloads(actions, mode, audio_root, video_root, playlist_cfg)
+
+    def _preflight_dependencies(self, actions: Iterable[SyncAction], playlist_cfg: dict) -> None:
+        """
+        Fail fast on core runtime dependencies before doing any filesystem work.
+
+        This keeps errors consistent regardless of entrypoint (CLI, bootstrap, tests, etc.).
+        """
+        needs_download = any(a.type == SyncActionType.DOWNLOAD for a in actions)
+        if not needs_download:
+            return
+
+        # yt-dlp is required for any download job (Python API usage)
+        ensure_yt_dlp_available()
+
+        # ffmpeg/ffprobe are required for merges and audio extraction; check once up-front
+        ffmpeg_hint = playlist_cfg.get("ffmpeg_path", "ffmpeg")
+        ensure_ffmpeg_available(str(ffmpeg_hint) if ffmpeg_hint is not None else None)
 
     async def _apply_renames(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
         playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
