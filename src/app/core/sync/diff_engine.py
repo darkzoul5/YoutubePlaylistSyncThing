@@ -30,13 +30,28 @@ class DiffEngine:
 
         for item in remote:
             desired_name = desired_names[item.video_id]
+            # If DB knows the current local filename and it already matches and exists -> nothing to do
             if item.local_filename == desired_name and desired_name in fs_by_name:
                 continue
 
-            if desired_name in fs_by_name:
-                actions.append(SyncAction(SyncActionType.RENAME, item=item, from_name=item.local_filename, to_name=desired_name))
+            # If DB knows a different current filename and it exists -> plan a rename
+            if item.local_filename and item.local_filename in fs_by_name and item.local_filename != desired_name:
+                actions.append(
+                    SyncAction(
+                        SyncActionType.RENAME,
+                        item=item,
+                        from_name=item.local_filename,
+                        to_name=desired_name,
+                    )
+                )
                 continue
 
+            # If the desired file already exists on disk but DB doesn't reflect it -> skip (already correct)
+            if desired_name in fs_by_name:
+                actions.append(SyncAction(SyncActionType.SKIP, item=item, to_name=desired_name))
+                continue
+
+            # Otherwise, we need to download
             actions.append(SyncAction(SyncActionType.DOWNLOAD, item=item, to_name=desired_name))
 
         known_ids = {i.video_id for i in remote}

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 from ..database.db import Database
-from ..models import PlaylistItem
+from ..models import PlaylistItem, SyncAction
 from ..scanner.playlist_scanner import PlaylistScanner
 from ..sync.diff_engine import DiffEngine
 from ..sync.filesystem import list_files
@@ -28,7 +28,7 @@ class SyncService:
             return [".mp3", ".mp4"]
         return [".mp3"]
 
-    def sync_from_config(self, playlist_cfg: dict) -> List[dict]:
+    def sync_from_config(self, playlist_cfg: dict) -> List[SyncAction]:
         url: str = playlist_cfg.get("url")
         mode: str = playlist_cfg.get("download_mode", "audio")
         save_path = Path(playlist_cfg.get("save_path", "./downloads")).resolve()
@@ -76,8 +76,39 @@ class SyncService:
                 downloaded=bool(row["downloaded"]),
             )
 
+        # Augment remote items with DB-known filenames/download flags
+        augmented: List[PlaylistItem] = []
+        for it in sanitized:
+            known = db_index.get(it.video_id)
+            if known is None:
+                augmented.append(it)
+            else:
+                augmented.append(
+                    PlaylistItem(
+                        playlist_id=it.playlist_id,
+                        video_id=it.video_id,
+                        title=it.title,
+                        playlist_index=it.playlist_index,
+                        local_filename=known.local_filename,
+                        downloaded=known.downloaded,
+                    )
+                )
+
         exts = self._mode_to_extensions(mode)
-        merged_actions = []
+        merged_actions: List[SyncAction] = []
+
+        # Compute per-extension actions against respective roots
+        for ext in exts:
+            if ext == ".mp3":
+                fs = list_files(save_path / "audio", [".mp3"])
+            elif ext == ".mp4":
+                fs = list_files(save_path / "video", [".mp4"])
+            else:
+                fs = list_files(save_path, [ext])
+            actions = self.diff.compute_actions(augmented, db_index, fs, ext)
+            merged_actions.extend(actions)
+
+        return merged_actions
         for ext in exts:
             mode_dir = "audio" if ext == ".mp3" else "video"
             fs_root = (save_path / mode_dir)
