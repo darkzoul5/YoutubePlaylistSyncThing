@@ -9,11 +9,14 @@ from ..download.queue_manager import DownloadJob, QueueManager
 from ..download.workers import default_worker
 from ..models import SyncAction, SyncActionType
 from ..sync.reorder import safe_multi_rename
+from ..database.db import Database
+from ..utils.yt import extract_playlist_id
 
 
 class ActionExecutor:
-    def __init__(self, concurrency: int = 2) -> None:
+    def __init__(self, db: Database, concurrency: int = 2) -> None:
         self.concurrency = max(1, concurrency)
+        self.db = db
 
     async def execute(self, actions: Iterable[SyncAction], playlist_cfg: dict) -> None:
         save_path = Path(playlist_cfg.get("save_path", "./downloads")).resolve()
@@ -26,17 +29,19 @@ class ActionExecutor:
         video_root.mkdir(parents=True, exist_ok=True)
 
         # First, handle renames safely in batch per extension
-        await self._apply_renames(actions, audio_root, video_root)
+        await self._apply_renames(actions, audio_root, video_root, playlist_cfg)
 
         # Then, recycle deletions
-        self._apply_deletions(actions, audio_root, video_root)
+        self._apply_deletions(actions, audio_root, video_root, playlist_cfg)
 
         # Finally, perform downloads concurrently
-        await self._apply_downloads(actions, mode, audio_root, video_root)
+        await self._apply_downloads(actions, mode, audio_root, video_root, playlist_cfg)
 
-    async def _apply_renames(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path) -> None:
+    async def _apply_renames(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
+        playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
         audio_renames = []
         video_renames = []
+        applied: List[SyncAction] = []
         for a in actions:
             if a.type != SyncActionType.RENAME or not a.from_name or not a.to_name:
                 continue
@@ -44,13 +49,23 @@ class ActionExecutor:
                 audio_renames.append((audio_root / a.from_name, audio_root / a.to_name))
             elif a.to_name.endswith(".mp4"):
                 video_renames.append((video_root / a.from_name, video_root / a.to_name))
+            applied.append(a)
 
         if audio_renames:
             safe_multi_rename(audio_renames)
         if video_renames:
             safe_multi_rename(video_renames)
 
-    def _apply_deletions(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path) -> None:
+        # Update DB filenames after successful rename attempts
+        for a in applied:
+            if a.item and a.to_name:
+                try:
+                    self.db.update_local_filename(playlist_id, a.item.video_id, a.to_name)
+                except Exception:
+                    pass
+
+    def _apply_deletions(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
+        playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
         recycle_audio = audio_root.parent / ".recycle" / "audio"
         recycle_video = video_root.parent / ".recycle" / "video"
         recycle_audio.mkdir(parents=True, exist_ok=True)
@@ -76,8 +91,15 @@ class ActionExecutor:
                         src.unlink()
                     except Exception:
                         pass
+            # Update DB to clear file state
+            if a.item:
+                try:
+                    self.db.clear_file_state(playlist_id, a.item.video_id)
+                except Exception:
+                    pass
 
-    async def _apply_downloads(self, actions: Iterable[SyncAction], mode: str, audio_root: Path, video_root: Path) -> None:
+    async def _apply_downloads(self, actions: Iterable[SyncAction], mode: str, audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
+        playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
         queue = QueueManager(concurrency=self.concurrency)
 
         async def worker(job: DownloadJob):
@@ -85,6 +107,7 @@ class ActionExecutor:
 
         await queue.start(worker)
         try:
+            jobs: List[DownloadJob] = []
             for a in actions:
                 if a.type != SyncActionType.DOWNLOAD or not a.item or not a.to_name:
                     continue
@@ -94,7 +117,21 @@ class ActionExecutor:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 url = f"https://www.youtube.com/watch?v={a.item.video_id}"
                 job = DownloadJob(item=a.item, output_path=output_path, url=url, mode=("audio" if is_audio else "video"))
+                jobs.append(job)
                 await queue.enqueue(job)
         finally:
             await queue._queue.join()  # wait for all jobs
             await queue.stop()
+
+        # Persist DB updates for completed jobs
+        for job in locals().get("jobs", []):
+            if job.item and job.output_path:
+                try:
+                    if job.state.name == "COMPLETED":
+                        self.db.update_local_filename(playlist_id, job.item.video_id, job.output_path.name)
+                        self.db.mark_downloaded(playlist_id, job.item.video_id, True)
+                    else:
+                        # Ensure not marked as downloaded if failed
+                        self.db.mark_downloaded(playlist_id, job.item.video_id, False)
+                except Exception:
+                    pass
