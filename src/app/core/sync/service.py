@@ -35,6 +35,16 @@ class SyncService:
         save_path.mkdir(parents=True, exist_ok=True)
 
         playlist_id = extract_playlist_id(url) or url
+        # Ensure playlist row exists/updated
+        self.db.upsert_playlist(
+            id=playlist_id,
+            name=playlist_cfg.get("name"),
+            url=url,
+            path=str(save_path),
+            mode=mode,
+            auto_sync=int(bool(playlist_cfg.get("auto_sync", False))),
+            sync_interval_minutes=int(playlist_cfg.get("sync_interval_minutes", 0) or 0),
+        )
         items = self.scanner.scan(url, playlist_id)
 
         sanitized: List[PlaylistItem] = []

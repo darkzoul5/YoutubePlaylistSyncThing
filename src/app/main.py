@@ -13,6 +13,7 @@ from .core.database.db import Database
 from .core.sync.service import SyncService
 from .core.sync.executor import ActionExecutor
 from .core.models import SyncActionType
+from .core.utils.yt import extract_playlist_id
 
 
 def bootstrap(db_path: Path | None = None) -> None:
@@ -38,6 +39,8 @@ def bootstrap(db_path: Path | None = None) -> None:
                 import asyncio
                 asyncio.run(executor.execute(actions, pl))
                 # Post summary (no DB readback yet)
+                pid = extract_playlist_id(pl.get('url', '')) or pl.get('url', '')
+                db.set_playlist_last_sync(pid)
                 print("Applied actions.")
             else:
                 print(f"No actions needed for: {pl.get('url')}")

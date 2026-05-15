@@ -11,12 +11,14 @@ from ..models import SyncAction, SyncActionType
 from ..sync.reorder import safe_multi_rename
 from ..database.db import Database
 from ..utils.yt import extract_playlist_id
+from ..events.event_bus import EventBus
 
 
 class ActionExecutor:
-    def __init__(self, db: Database, concurrency: int = 2) -> None:
+    def __init__(self, db: Database, concurrency: int = 2, event_bus: EventBus | None = None) -> None:
         self.concurrency = max(1, concurrency)
         self.db = db
+        self.bus = event_bus
 
     async def execute(self, actions: Iterable[SyncAction], playlist_cfg: dict) -> None:
         save_path = Path(playlist_cfg.get("save_path", "./downloads")).resolve()
@@ -63,6 +65,8 @@ class ActionExecutor:
                     self.db.update_local_filename(playlist_id, a.item.video_id, a.to_name)
                 except Exception:
                     pass
+                if self.bus:
+                    await self.bus.publish("RenameApplied", {"playlist_id": playlist_id, "video_id": a.item.video_id, "to": a.to_name})
 
     def _apply_deletions(self, actions: Iterable[SyncAction], audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
         playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
@@ -97,12 +101,16 @@ class ActionExecutor:
                     self.db.clear_file_state(playlist_id, a.item.video_id)
                 except Exception:
                     pass
+                if self.bus:
+                    asyncio.create_task(self.bus.publish("FileRecycled", {"playlist_id": playlist_id, "video_id": a.item.video_id, "name": a.from_name}))
 
     async def _apply_downloads(self, actions: Iterable[SyncAction], mode: str, audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
         playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
         queue = QueueManager(concurrency=self.concurrency)
 
         async def worker(job: DownloadJob):
+            if self.bus and job.item:
+                await self.bus.publish("DownloadStarted", {"playlist_id": playlist_id, "video_id": job.item.video_id, "target": str(job.output_path)})
             await default_worker(job)
 
         await queue.start(worker)
@@ -130,8 +138,12 @@ class ActionExecutor:
                     if job.state.name == "COMPLETED":
                         self.db.update_local_filename(playlist_id, job.item.video_id, job.output_path.name)
                         self.db.mark_downloaded(playlist_id, job.item.video_id, True)
+                        if self.bus:
+                            await self.bus.publish("DownloadCompleted", {"playlist_id": playlist_id, "video_id": job.item.video_id, "target": str(job.output_path)})
                     else:
                         # Ensure not marked as downloaded if failed
                         self.db.mark_downloaded(playlist_id, job.item.video_id, False)
+                        if self.bus:
+                            await self.bus.publish("DownloadFailed", {"playlist_id": playlist_id, "video_id": job.item.video_id, "error": job.error or "unknown"})
                 except Exception:
                     pass
