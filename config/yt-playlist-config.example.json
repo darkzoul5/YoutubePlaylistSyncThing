@@ -9,5 +9,5 @@
     }
   ],
   "yt_dlp_path": "./bin/yt-dlp",
-  "ffmpeg_path": "./bin/ffmpeg",
+  "ffmpeg_path": "./bin/ffmpeg"
 }
