@@ -19,6 +19,9 @@ class Downloader:
         try:
             job.state = JobState.DOWNLOADING
             await self._download(job)
+            # Optional local audio extraction when requested
+            if job.mode == "video" and job.audio_output_path is not None:
+                await self._extract_audio(job)
             job.state = JobState.COMPLETED
         except Exception as exc:  # pragma: no cover - environment dependent
             job.state = JobState.FAILED
@@ -30,6 +33,17 @@ class Downloader:
 
         def run():
             import yt_dlp  # type: ignore
+
+            class _QuietLogger:
+                def debug(self, msg):
+                    pass
+                def warning(self, msg):
+                    pass
+                def error(self, msg):
+                    # swallow inner repeats; errors are surfaced via exceptions
+                    pass
+                def info(self, msg):
+                    pass
 
             outtmpl = str(job.output_path)
             if job.mode == "audio":
@@ -46,6 +60,7 @@ class Downloader:
                     "noplaylist": True,
                     "quiet": True,
                     "no_warnings": True,
+                    "logger": _QuietLogger(),
                 }
             else:  # video
                 ydl_opts = {
@@ -55,12 +70,46 @@ class Downloader:
                     "noplaylist": True,
                     "quiet": True,
                     "no_warnings": True,
+                    "logger": _QuietLogger(),
                 }
 
-            if self.ffmpeg_path:
+            # Prefer job-provided path first
+            if job.ffmpeg_path:
+                ydl_opts["ffmpeg_location"] = job.ffmpeg_path
+            elif self.ffmpeg_path:
                 ydl_opts["ffmpeg_location"] = self.ffmpeg_path
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[attr-defined]
                 ydl.download([job.url])
 
+        await asyncio.to_thread(run)
+
+    async def _extract_audio(self, job: DownloadJob):
+        import asyncio
+        from shutil import which
+
+        src = job.output_path
+        dst = job.audio_output_path
+        if not src or not dst:
+            return
+
+        def run():
+            ffmpeg_exe = job.ffmpeg_path or self.ffmpeg_path or which("ffmpeg") or "ffmpeg"
+            import subprocess
+            cmd = [
+                str(ffmpeg_exe),
+                "-y",
+                "-i",
+                str(src),
+                "-vn",
+                "-codec:a",
+                "libmp3lame",
+                "-q:a",
+                "0",
+                str(dst),
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Mark converting state only for local clarity; not published
+        job.state = JobState.CONVERTING
         await asyncio.to_thread(run)

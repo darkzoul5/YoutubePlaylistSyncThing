@@ -116,15 +116,62 @@ class ActionExecutor:
         await queue.start(worker)
         try:
             jobs: List[DownloadJob] = []
+
+            # Collapse 'both' into single video download + local audio extraction
+            # Build per-video desired outputs
+            by_vid: dict[str, dict[str, str]] = {}
             for a in actions:
                 if a.type != SyncActionType.DOWNLOAD or not a.item or not a.to_name:
                     continue
+                d = by_vid.setdefault(a.item.video_id, {})
+                if a.to_name.endswith(".mp3"):
+                    d["audio"] = a.to_name
+                elif a.to_name.endswith(".mp4"):
+                    d["video"] = a.to_name
+
+            ffmpeg_cfg = str(playlist_cfg.get("ffmpeg_path", "ffmpeg")) if playlist_cfg.get("ffmpeg_path") is not None else None
+
+            for a in actions:
+                if a.type != SyncActionType.DOWNLOAD or not a.item or not a.to_name:
+                    continue
+                vid = a.item.video_id
+                targets = by_vid.get(vid, {})
+
+                # If both audio and video requested for this video id, enqueue only video job with audio_output_path
+                if targets.get("audio") and targets.get("video"):
+                    # only create job once, when encountering the video target
+                    if a.to_name.endswith(".mp4"):
+                        video_path = video_root / targets["video"]
+                        audio_path = audio_root / targets["audio"]
+                        for p in (video_path.parent, audio_path.parent):
+                            p.mkdir(parents=True, exist_ok=True)
+                        url = f"https://www.youtube.com/watch?v={vid}"
+                        job = DownloadJob(
+                            item=a.item,
+                            output_path=video_path,
+                            url=url,
+                            mode="video",
+                            ffmpeg_path=ffmpeg_cfg,
+                            audio_output_path=audio_path,
+                        )
+                        jobs.append(job)
+                        await queue.enqueue(job)
+                    # skip creating a separate audio job
+                    continue
+
+                # Normal single-output path
                 is_audio = a.to_name.endswith(".mp3")
                 root = audio_root if is_audio else video_root
                 output_path = root / a.to_name
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                url = f"https://www.youtube.com/watch?v={a.item.video_id}"
-                job = DownloadJob(item=a.item, output_path=output_path, url=url, mode=("audio" if is_audio else "video"))
+                url = f"https://www.youtube.com/watch?v={vid}"
+                job = DownloadJob(
+                    item=a.item,
+                    output_path=output_path,
+                    url=url,
+                    mode=("audio" if is_audio else "video"),
+                    ffmpeg_path=ffmpeg_cfg,
+                )
                 jobs.append(job)
                 await queue.enqueue(job)
         finally:
@@ -136,10 +183,12 @@ class ActionExecutor:
             if job.item and job.output_path:
                 try:
                     if job.state.name == "COMPLETED":
-                        self.db.update_local_filename(playlist_id, job.item.video_id, job.output_path.name)
+                        # Prefer audio filename if produced
+                        final_name = job.audio_output_path.name if job.audio_output_path is not None else job.output_path.name
+                        self.db.update_local_filename(playlist_id, job.item.video_id, final_name)
                         self.db.mark_downloaded(playlist_id, job.item.video_id, True)
                         if self.bus:
-                            await self.bus.publish("DownloadCompleted", {"playlist_id": playlist_id, "video_id": job.item.video_id, "target": str(job.output_path)})
+                            await self.bus.publish("DownloadCompleted", {"playlist_id": playlist_id, "video_id": job.item.video_id, "target": str(job.audio_output_path or job.output_path)})
                     else:
                         # Ensure not marked as downloaded if failed
                         self.db.mark_downloaded(playlist_id, job.item.video_id, False)

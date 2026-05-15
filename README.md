@@ -22,6 +22,12 @@ Local-first YouTube playlist synchronization client.
 - `yt-dlp` (pip)
 - `ffmpeg` (for audio extraction)
 
+Install:
+
+```bash
+pip install -U yt-dlp
+```
+
 ## Configure
 
 Create/edit `config/yt-playlist-config.json`:

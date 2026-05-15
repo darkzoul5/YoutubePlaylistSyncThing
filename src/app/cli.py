@@ -9,6 +9,7 @@ from .core.database.db import Database
 from .core.sync.service import SyncService
 from .core.sync.executor import ActionExecutor
 from .core.events.event_bus import EventBus
+import re
 from .core.utils.yt import extract_playlist_id
 
 
@@ -17,6 +18,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--apply", action="store_true", help="Apply actions (otherwise compute-only)")
     parser.add_argument("--db", type=Path, default=Path("app/data/app.db"), help="Path to SQLite database")
     parser.add_argument("--playlist", type=int, default=None, help="Only run for a specific playlist index (0-based)")
+    parser.add_argument("--verbose", action="store_true", help="Print detailed events (rename/recycle/start)")
     args = parser.parse_args(argv)
 
     settings = Settings()
@@ -25,16 +27,45 @@ def main(argv: list[str] | None = None) -> int:
     bus = EventBus()
     executor = ActionExecutor(db, event_bus=bus)
 
-    async def log_event(payload):
-        # Placeholder subscriber for future GUI/log integration
-        print(f"EVENT: {payload}")
+    seen_errors: set[str] = set()
+
+    ansi = re.compile(r"\x1b\[[0-9;]*m")
+
+    async def on_started(payload):
+        if args.verbose:
+            vid = payload.get("video_id")
+            target = payload.get("target")
+            print(f"START: {vid} → {target}")
+
+    async def on_completed(payload):
+        pid = payload.get("playlist_id")
+        vid = payload.get("video_id")
+        target = payload.get("target")
+        print(f"OK: {vid} → {target}")
+
+    async def on_failed(payload):
+        raw = str(payload.get("error", "failed"))
+        msg = ansi.sub("", raw)
+        # Print only once per unique message
+        if msg not in seen_errors:
+            seen_errors.add(msg)
+            # Friendly hint for missing ffmpeg
+            if "ffprobe and ffmpeg not found" in msg.lower():
+                print("ERROR: ffmpeg not found. Install ffmpeg or set 'ffmpeg_path' in config.")
+            else:
+                print(f"ERROR: {msg}")
 
     # Subscribe to key events
-    bus.subscribe("DownloadStarted", log_event)
-    bus.subscribe("DownloadCompleted", log_event)
-    bus.subscribe("DownloadFailed", log_event)
-    bus.subscribe("RenameApplied", log_event)
-    bus.subscribe("FileRecycled", log_event)
+    bus.subscribe("DownloadStarted", on_started)
+    bus.subscribe("DownloadCompleted", on_completed)
+    bus.subscribe("DownloadFailed", on_failed)
+    if args.verbose:
+        async def on_rename(payload):
+            print(f"RENAME: {payload.get('video_id')} → {payload.get('to')}")
+        async def on_recycle(payload):
+            print(f"RECYCLE: {payload.get('video_id')} ← {payload.get('name')}")
+        bus.subscribe("RenameApplied", on_rename)
+        bus.subscribe("FileRecycled", on_recycle)
 
     playlists = settings.playlists
     if args.playlist is not None:
