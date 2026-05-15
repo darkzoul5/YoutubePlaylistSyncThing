@@ -2,7 +2,7 @@ import logging
 import subprocess
 from types import SimpleNamespace
 
-import src.cli as cli_mod
+import src.old.cli as cli_mod
 
 
 class DummyCompleted(SimpleNamespace):

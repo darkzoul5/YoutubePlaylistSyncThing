@@ -1,7 +1,7 @@
 import subprocess
 import shutil
 
-from src.downloader import PlaylistDownloader
+from src.old.downloader import PlaylistDownloader
 from tests.dummy_config import DummyConfig
 
 

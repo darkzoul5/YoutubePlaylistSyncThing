@@ -1,5 +1,5 @@
 import logging
-from src.manager import PlaylistManager
+from src.old.manager import PlaylistManager
 from tests.dummy_config import DummyConfig
 
 

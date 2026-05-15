@@ -2,7 +2,7 @@ import json
 import subprocess
 from types import SimpleNamespace
 
-from src.downloader import PlaylistDownloader
+from src.old.downloader import PlaylistDownloader
 from tests.dummy_config import DummyConfig
 
 

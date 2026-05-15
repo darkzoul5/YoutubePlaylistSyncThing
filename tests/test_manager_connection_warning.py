@@ -1,6 +1,6 @@
 import logging
 from tests.dummy_config import DummyConfig
-from src.manager import PlaylistManager
+from src.old.manager import PlaylistManager
 
 
 def test_manager_warns_and_sleeps(monkeypatch, caplog):

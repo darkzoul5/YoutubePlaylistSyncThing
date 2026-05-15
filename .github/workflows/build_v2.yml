@@ -200,8 +200,8 @@ jobs:
       - name: Set docker image names
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "RELEASE_IMAGE=ghcr.io/${GITHUB_ACTOR}/ytpld:${VERSION}" >> $GITHUB_ENV
-          echo "LATEST_IMAGE=ghcr.io/${GITHUB_ACTOR}/ytpld:latest" >> $GITHUB_ENV
+          echo "RELEASE_IMAGE=ghcr.io/${GITHUB_ACTOR}/ytst:${VERSION}" >> $GITHUB_ENV
+          echo "LATEST_IMAGE=ghcr.io/${GITHUB_ACTOR}/ytst:latest" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
@@ -248,9 +248,9 @@ jobs:
       - name: Push Docker images
         run: |
           docker load -i "${{ github.workspace }}/artifacts/docker-images/docker-image.tar"
-          docker push ghcr.io/${GITHUB_ACTOR}/ytpld:${{ steps.version.outputs.version }}
+          docker push ghcr.io/${GITHUB_ACTOR}/ytst:${{ steps.version.outputs.version }}
           docker load -i "${{ github.workspace }}/artifacts/docker-images/docker-image-latest.tar"
-          docker push ghcr.io/${GITHUB_ACTOR}/ytpld:latest
+          docker push ghcr.io/${GITHUB_ACTOR}/ytst:latest
 
       - name: Create Release
         uses: softprops/action-gh-release@v3

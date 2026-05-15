@@ -11,7 +11,7 @@ import sys
 import shutil
 import time
 from pathlib import Path
-from src.downloader import PlaylistDownloader
+from src.old.downloader import PlaylistDownloader
 from tests.dummy_config import DummyConfig
 # Make imports robust when running the script directly from different working directories.
 # Ensure the repository root is on sys.path so the script can import `src`.

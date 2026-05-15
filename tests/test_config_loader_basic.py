@@ -1,6 +1,6 @@
 import json
 
-from src.config import ConfigLoader
+from src.old.config import ConfigLoader
 
 
 def test_config_loader_reads_properties(tmp_path, monkeypatch):
