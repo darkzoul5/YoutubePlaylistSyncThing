@@ -11,19 +11,36 @@ from pathlib import Path
 from .config.settings import Settings
 from .core.database.db import Database
 from .core.sync.service import SyncService
+from .core.sync.executor import ActionExecutor
+from .core.models import SyncActionType
 
 
 def bootstrap(db_path: Path | None = None) -> None:
     settings = Settings()
     db = Database((db_path or Path("app/data/app.db")).resolve())
     service = SyncService(db)
+    executor = ActionExecutor(db)
 
     # Iterate configured playlists and compute actions (no execution yet)
     for pl in settings.playlists:
         try:
             actions = service.sync_from_config(pl)
-            # For now, just print summary for visibility during development
-            print(f"Computed {len(actions)} actions for playlist: {pl.get('url')}")
+            # Apply actions now
+            if actions:
+                print(f"Applying {len(actions)} actions for: {pl.get('url')}")
+                # Summarize before applying
+                counts = {}
+                for a in actions:
+                    counts[a.type] = counts.get(a.type, 0) + 1
+                summary = ", ".join(f"{k.name}:{v}" for k, v in counts.items())
+                print(f"Plan → {summary}")
+                # Execute
+                import asyncio
+                asyncio.run(executor.execute(actions, pl))
+                # Post summary (no DB readback yet)
+                print("Applied actions.")
+            else:
+                print(f"No actions needed for: {pl.get('url')}")
         except Exception as exc:  # keep bootstrap resilient during early dev
             print(f"Failed to sync playlist {pl.get('url')}: {exc}")
 
