@@ -2,7 +2,7 @@
 
 ## Subject Area
 
-- Tool for downloading and synchronizing YouTube playlists.
+- Tool for downloading and synchronizing local YouTube playlists.
 - Focuses on batch downloading, format selection (audio and/or video), configurable quality and keeping local copies synced with playlist changes.
 - Targets power users and archivists who need large-scale, repeatable playlist archiving and ongoing synchronization, with GUI interface.
 
@@ -14,7 +14,7 @@
 
 ## Users Definition
 
-Individuals who need to download a large number of videos or audio files from a YouTube playlist and keep it updated
+Individuals who need to have a local youtube playlist synced with a large number of videos or audio files
 
 ## Functionality Definition
 
@@ -38,13 +38,10 @@ Individuals who need to download a large number of videos or audio files from a 
 ## Platforms
 
 - Desktop: Windows (Primary), Linux
-- Docker
-- Possible Future: Web App, Android App (via shared FastAPI backend)
 
 ## Architecture & Languages
 
-- Core Engine: Python (yt-dlp wrapper)
-- Backend API: FastAPI (Local localhost-only boundary)
+- Core Engine: Python (yt-dlp)
 - Desktop Frontend: PySide6 (Qt for Python)
 - Distribution: PyInstaller / Briefcase (Windows .exe, Linux AppImage)
   

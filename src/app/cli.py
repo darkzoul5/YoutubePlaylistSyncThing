@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 from pathlib import Path
 
 from .config.settings import Settings
@@ -12,6 +13,7 @@ from .core.events.event_bus import EventBus
 import re
 from .core.utils.yt import extract_playlist_id
 from .core.utils.deps import DependencyError
+from .core.utils.logging_setup import configure_logging
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -20,7 +22,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db", type=Path, default=Path("app/data/app.db"), help="Path to SQLite database")
     parser.add_argument("--playlist", type=int, default=None, help="Only run for a specific playlist index (0-based)")
     parser.add_argument("--verbose", action="store_true", help="Print detailed events (rename/recycle/start)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging to console + app/data/app.log")
     args = parser.parse_args(argv)
+
+    configure_logging(verbose=bool(args.debug), log_file=Path("app/data/app.log"))
+    log = logging.getLogger(__name__)
 
     settings = Settings()
     db = Database(args.db.resolve())
@@ -88,14 +94,17 @@ def main(argv: list[str] | None = None) -> int:
             counts[a.type.name] = counts.get(a.type.name, 0) + 1
         summary = ", ".join(f"{k}:{v}" for k, v in sorted(counts.items()))
         print(f"Playlist {pid}: {len(actions)} actions → {summary}")
+        log.info("playlist=%s actions=%s summary=%s", pid, len(actions), summary)
         if args.apply and actions:
             try:
                 asyncio.run(executor.execute(actions, pl))
             except DependencyError as e:
                 print(f"ERROR: {e}")
+                log.error("dependency error: %s", e)
                 return 2
             db.set_playlist_last_sync(pid)
             print(f"Applied actions for {pid}.")
+            log.info("playlist=%s applied_actions=%s", pid, len(actions))
 
     return 0
 
