@@ -28,6 +28,7 @@ class DownloadJob:
     state: JobState = JobState.QUEUED
     error: Optional[str] = None
     ffmpeg_path: Optional[str] = None
+    max_download_quality: Optional[str] = None
     audio_output_path: Optional[Path] = None  # when mode=video and we also want mp3
     keep_video: bool = True
 

@@ -15,6 +15,30 @@ class Downloader:
         self.yt_dlp_path = yt_dlp_path
         self.ffmpeg_path = ffmpeg_path
 
+    @staticmethod
+    def build_format(max_download_quality) -> str:
+        def parse_height_cap(value) -> int | None:
+            if value is None:
+                return None
+            if isinstance(value, int):
+                return value if value > 0 else None
+            s = str(value).strip().lower()
+            if not s or s in {"best", "max", "auto", "none", "null"}:
+                return None
+            digits = "".join(ch for ch in s if ch.isdigit())
+            if not digits:
+                return None
+            try:
+                cap = int(digits)
+            except Exception:
+                return None
+            return cap if cap > 0 else None
+
+        cap = parse_height_cap(max_download_quality)
+        if cap is not None:
+            return f"best[ext=mp4][acodec!=none][vcodec!=none][height<={cap}]/best[ext=mp4][height<={cap}]/best[ext=mp4]"
+        return "best[ext=mp4][acodec!=none][vcodec!=none]/best[ext=mp4]"
+
     async def handle_job(self, job: DownloadJob):
         try:
             job.state = JobState.DOWNLOADING
@@ -53,12 +77,14 @@ class Downloader:
 
             outtmpl = str(job.output_path)
 
+            fmt = self.build_format(getattr(job, "max_download_quality", None))
+
             # All modes download a single muxed mp4 when possible.
             # This avoids any ffmpeg-driven merging during the download step, satisfying:
             #   - video: "original file, no processing"
             #   - audio/both: extraction is done separately after download
             ydl_opts = {
-                "format": "best[ext=mp4][acodec!=none][vcodec!=none]/best[ext=mp4]",
+                "format": fmt,
                 "outtmpl": outtmpl,
                 "noplaylist": True,
                 "quiet": True,

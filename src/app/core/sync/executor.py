@@ -152,6 +152,7 @@ class ActionExecutor:
                     d["video"] = a.to_name
 
             ffmpeg_cfg = str(playlist_cfg.get("ffmpeg_path", "ffmpeg")) if playlist_cfg.get("ffmpeg_path") is not None else None
+            max_quality_cfg = playlist_cfg.get("max_download_quality")
             temp_video_root = video_root / ".tmp"
             temp_video_root.mkdir(parents=True, exist_ok=True)
 
@@ -176,6 +177,7 @@ class ActionExecutor:
                             url=url,
                             mode="video",
                             ffmpeg_path=ffmpeg_cfg,
+                            max_download_quality=max_quality_cfg,
                             audio_output_path=audio_path,
                         )
                         jobs.append(job)
@@ -200,6 +202,7 @@ class ActionExecutor:
                         url=url,
                         mode="video",
                         ffmpeg_path=ffmpeg_cfg,
+                        max_download_quality=max_quality_cfg,
                         audio_output_path=audio_path,
                         keep_video=False,
                     )
@@ -215,6 +218,7 @@ class ActionExecutor:
                         url=url,
                         mode="video",
                         ffmpeg_path=ffmpeg_cfg,
+                        max_download_quality=max_quality_cfg,
                     )
                     jobs.append(job)
                     await queue.enqueue(job)

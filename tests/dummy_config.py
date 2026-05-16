@@ -12,7 +12,7 @@ class DummyConfig:
     max_parallel_downloads = int(os.getenv("TEST_MAX_PARALLEL", "2"))
     aria2c_connections = int(os.getenv("TEST_ARIA2C_CONN", "2"))
     download_mode = os.getenv("TEST_DOWNLOAD_MODE", "audio")
-    max_video_quality = os.getenv("TEST_MAX_VIDEO_QUALITY", "1080p")
+    max_download_quality = os.getenv("TEST_MAX_DOWNLOAD_QUALITY", "1080p")
     # runtime flags
     debug = False
     non_interactive = False

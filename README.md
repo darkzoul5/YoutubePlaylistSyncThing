@@ -27,27 +27,27 @@ Download the latest release from [releases](https://github.com/darkzoul5/Youtube
 
 ## Configure
 
-On first run, the app will auto-create a default `yt-playlist-config.json` in the project root (if missing).
+On first run, the app will auto-create a default `config/yt-playlist-config.json` (if missing).
 
-Create/edit `yt-playlist-config.json`:
+Create/edit `config/yt-playlist-config.json`:
 
 ```json
 {
-  "config_path": "./",
   "ffmpeg_path": "./bin/ffmpeg.exe",
   "playlists": [
     {
       "url": "https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID",
       "download_mode": "audio",
+      "max_download_quality": "1080p",
       "save_path": "./downloads"
     }
   ]
 }
 ```
 
-`config_path` (optional):
+`max_download_quality`:
 
-- If set to a string path, the app loads the config from that file instead (path is relative to the current config file).
+- Limits yt-dlp download quality (e.g. `"1080p"`, `"720p"`). This only affects the downloaded video format selection.
 
 `download_mode`:
 
