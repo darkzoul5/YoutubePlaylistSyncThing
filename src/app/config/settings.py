@@ -18,6 +18,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "max_download_quality": "1080p",
     "save_path": "./downloads",
     "ffmpeg_path": _default_ffmpeg_path(),
+    "max_parallel_downloads": 2,
+    "retry_max_retries": 2,
+    "retry_delay_seconds": 1.5,
 }
 
 
@@ -63,6 +66,9 @@ class Settings:
             "max_download_quality": self.data.get("max_download_quality", DEFAULT_CONFIG["max_download_quality"]),
             "save_path": self.data.get("save_path", DEFAULT_CONFIG["save_path"]),
             "ffmpeg_path": self.data.get("ffmpeg_path", DEFAULT_CONFIG["ffmpeg_path"]),
+            "max_parallel_downloads": self.data.get("max_parallel_downloads", DEFAULT_CONFIG["max_parallel_downloads"]),
+            "retry_max_retries": self.data.get("retry_max_retries", DEFAULT_CONFIG["retry_max_retries"]),
+            "retry_delay_seconds": self.data.get("retry_delay_seconds", DEFAULT_CONFIG["retry_delay_seconds"]),
         }
 
         results: List[Dict[str, Any]] = []

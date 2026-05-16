@@ -128,12 +128,28 @@ class ActionExecutor:
 
     async def _apply_downloads(self, actions: Iterable[SyncAction], mode: str, audio_root: Path, video_root: Path, playlist_cfg: dict) -> None:
         playlist_id = extract_playlist_id(playlist_cfg.get("url", "")) or playlist_cfg.get("url", "")
-        queue = QueueManager(concurrency=self.concurrency)
+        concurrency_cfg = playlist_cfg.get("max_parallel_downloads", self.concurrency)
+        try:
+            concurrency = int(concurrency_cfg) if concurrency_cfg is not None else self.concurrency
+        except Exception:
+            concurrency = self.concurrency
+        queue = QueueManager(concurrency=concurrency)
+
+        retry_max_cfg = playlist_cfg.get("retry_max_retries", 2)
+        retry_delay_cfg = playlist_cfg.get("retry_delay_seconds", 1.5)
+        try:
+            retry_max_retries = int(retry_max_cfg) if retry_max_cfg is not None else 2
+        except Exception:
+            retry_max_retries = 2
+        try:
+            retry_delay_seconds = float(retry_delay_cfg) if retry_delay_cfg is not None else 1.5
+        except Exception:
+            retry_delay_seconds = 1.5
 
         async def worker(job: DownloadJob):
             if self.bus and job.item:
                 await self.bus.publish("DownloadStarted", {"playlist_id": playlist_id, "video_id": job.item.video_id, "target": str(job.output_path)})
-            await default_worker(job)
+            await default_worker(job, max_retries=retry_max_retries, delay_seconds=retry_delay_seconds)
 
         await queue.start(worker)
         try:
@@ -223,7 +239,7 @@ class ActionExecutor:
                     jobs.append(job)
                     await queue.enqueue(job)
         finally:
-            await queue._queue.join()  # wait for all jobs
+            await queue.join()  # wait for all jobs
             await queue.stop()
 
         # Persist DB updates for completed jobs

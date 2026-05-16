@@ -59,3 +59,6 @@ class QueueManager:
 
     async def enqueue(self, job: DownloadJob):
         await self._queue.put(job)
+
+    async def join(self) -> None:
+        await self._queue.join()

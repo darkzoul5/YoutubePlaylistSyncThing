@@ -34,6 +34,9 @@ Create/edit `config/yt-playlist-config.json`:
 ```json
 {
   "ffmpeg_path": "./bin/ffmpeg.exe",
+  "max_parallel_downloads": 2,
+  "retry_max_retries": 2,
+  "retry_delay_seconds": 1.5,
   "playlists": [
     {
       "url": "https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID",
@@ -46,10 +49,14 @@ Create/edit `config/yt-playlist-config.json`:
 ```
 
 Defaults:
+
 - `ffmpeg_path`: `./bin/ffmpeg.exe` (Windows) or `./bin/ffmpeg` (Linux)
 - `download_mode`: `video`
 - `max_download_quality`: `1080p`
 - `save_path`: `./downloads`
+- `max_parallel_downloads`: `2`
+- `retry_max_retries`: `2`
+- `retry_delay_seconds`: `1.5`
 
 `max_download_quality`:
 
@@ -61,6 +68,12 @@ Defaults:
 - `video`: download playlist videos as muxed `.mp4` (no ffmpeg processing)
 - `audio`: download muxed `.mp4`, extract `.mp3`, delete the `.mp4`
 - `both`: download muxed `.mp4`, extract `.mp3`, keep both files
+
+Queue / retry:
+
+- `max_parallel_downloads`: number of concurrent download workers.
+- `retry_max_retries`: how many times a failed download job is retried.
+- `retry_delay_seconds`: base delay before retry; increases with backoff.
 
 ## Run
 

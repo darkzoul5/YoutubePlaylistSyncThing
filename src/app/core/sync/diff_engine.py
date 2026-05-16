@@ -8,7 +8,7 @@ from ..models import FilesystemEntry, PlaylistItem, SyncAction, SyncActionType
 class DiffEngine:
     """
     Compares remote playlist items, database state, and filesystem to
-    produce a list of actions. Initial MVP computes DOWNLOAD/RENAME/REORDER
+    produce a list of actions. Initial MVP computes DOWNLOAD/RENAME/DELETE
     based on simple filename scheme "0001 - Title.ext".
     """
 
