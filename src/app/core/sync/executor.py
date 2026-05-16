@@ -25,7 +25,7 @@ class ActionExecutor:
         self._preflight_dependencies(actions, playlist_cfg)
 
         save_path = Path(playlist_cfg.get("save_path", "./downloads")).resolve()
-        mode = playlist_cfg.get("download_mode", "audio")
+        mode = playlist_cfg.get("download_mode", "video")
 
         # Prepare roots
         audio_root = save_path / "audio"
