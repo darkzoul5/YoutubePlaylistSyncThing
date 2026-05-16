@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 from ..models import PlaylistItem
 
@@ -16,7 +17,7 @@ class PlaylistScanner:
     def __init__(self) -> None:
         pass
 
-    def scan(self, playlist_url: str, playlist_id: str) -> List[PlaylistItem]:
+    def scan(self, playlist_url: str, playlist_id: str, *, ffmpeg_path: Optional[str] = None) -> List[PlaylistItem]:
         try:
             import yt_dlp  # type: ignore
         except Exception as exc:  # pragma: no cover - environment dependent
@@ -28,6 +29,15 @@ class PlaylistScanner:
             "quiet": True,
             "dump_single_json": True,
         }
+
+        # If a local ffmpeg binary is configured, pass it through so yt-dlp doesn't rely on PATH.
+        if ffmpeg_path:
+            try:
+                p = Path(str(ffmpeg_path))
+                if p.exists():
+                    ydl_opts["ffmpeg_location"] = str(p)
+            except Exception:
+                pass
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[attr-defined]
             info = ydl.extract_info(playlist_url, download=False)
