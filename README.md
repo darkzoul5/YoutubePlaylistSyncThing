@@ -33,22 +33,24 @@ Create/edit `yt-playlist-config.json`:
 
 ```json
 {
-  "config_path": null,
+  "config_path": "./",
+  "ffmpeg_path": "./bin/ffmpeg.exe",
   "playlists": [
     {
       "url": "https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID",
       "download_mode": "audio",
       "save_path": "./downloads"
     }
-  ],
-  "ffmpeg_path": "./ffmpeg"
+  ]
 }
 ```
 
 `config_path` (optional):
+
 - If set to a string path, the app loads the config from that file instead (path is relative to the current config file).
 
 `download_mode`:
+
 - `video`: download playlist videos as muxed `.mp4` (no ffmpeg processing)
 - `audio`: download muxed `.mp4`, extract `.mp3`, delete the `.mp4`
 - `both`: download muxed `.mp4`, extract `.mp3`, keep both files
