@@ -130,7 +130,7 @@ class PlaylistManagerPage(QtWidgets.QWidget):
         # Optional DB metadata (last_sync). If DB is missing/corrupt, keep UI usable.
         last_sync_by_id: dict[str, str] = {}
         try:
-            db = Database(Path("app/data/app.db").resolve())
+            db = Database(Path("db/app.db").resolve())
             for r in rows:
                 pid = extract_playlist_id(r.url) or r.url
                 ls = db.get_playlist_last_sync(pid)

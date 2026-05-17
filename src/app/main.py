@@ -20,7 +20,7 @@ from .core.utils.deps import DependencyError
 
 def bootstrap(db_path: Path | None = None) -> None:
     settings = Settings()
-    db = Database((db_path or Path("app/data/app.db")).resolve())
+    db = Database((db_path or Path("db/app.db")).resolve())
     service = SyncService(db)
     executor = ActionExecutor(db)
 

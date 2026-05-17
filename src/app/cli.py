@@ -19,7 +19,7 @@ from .core.utils.logging_setup import configure_logging
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="YouTube Playlist Sync — compute/apply actions")
     parser.add_argument("--apply", action="store_true", help="Apply actions (otherwise compute-only)")
-    parser.add_argument("--db", type=Path, default=Path("app/data/app.db"), help="Path to SQLite database")
+    parser.add_argument("--db", type=Path, default=Path("db/app.db"), help="Path to SQLite database")
     parser.add_argument("--playlist", type=int, default=None, help="Only run for a specific playlist index (0-based)")
     parser.add_argument("--verbose", action="store_true", help="Print detailed events (rename/recycle/start)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging to console + app/data/app.log")

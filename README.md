@@ -98,7 +98,7 @@ python -m app.cli --apply --playlist 0
 
 ## Data & Layout
 
-- Database: `app/data/app.db`
+- Database: `db/app.db`
 - Outputs: `<save_path>/audio` and/or `<save_path>/video`
 - Recycle bin: `<save_path>/.recycle/{audio,video}`
 

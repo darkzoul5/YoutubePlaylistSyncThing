@@ -18,7 +18,7 @@ from ..core.events.event_bus import EventBus
 class SyncRequest:
     playlist_cfg: Dict[str, Any]
     apply: bool = True
-    db_path: Path = Path("app/data/app.db")
+    db_path: Path = Path("db/app.db")
     cancel_flag: threading.Event | None = None
     pause_flag: threading.Event | None = None
 
