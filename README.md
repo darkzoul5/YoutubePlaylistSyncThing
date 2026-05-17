@@ -72,11 +72,12 @@ Queue / retry:
 - Run `ytpl-sync.exe` (GUI).
 
 ## Tray
-
+ 
 - The app supports minimizing to tray on close if the OS provides a system tray; use the tray icon menu to quit.
 - Tray behavior settings (Settings page):
   - `close_to_tray`: close hides to tray (keeps running).
   - `minimize_to_tray`: minimize hides to tray.
+  - `start_minimized_to_tray`: start hidden in tray.
 
 ## Data & Layout
 

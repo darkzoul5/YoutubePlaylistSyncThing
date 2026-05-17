@@ -6,7 +6,8 @@
   "ui": {
     "tray": {
       "close_to_tray": true,
-      "minimize_to_tray": false
+      "minimize_to_tray": false,
+      "start_minimized_to_tray": false
     }
   },
   "playlists": [

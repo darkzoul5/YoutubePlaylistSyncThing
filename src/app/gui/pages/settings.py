@@ -58,6 +58,10 @@ class SettingsPage(QtWidgets.QWidget):
         self._minimize_to_tray.setChecked(False)
         tray_form.addRow("minimize_to_tray", self._minimize_to_tray)
 
+        self._start_minimized_to_tray = QtWidgets.QCheckBox()
+        self._start_minimized_to_tray.setChecked(False)
+        tray_form.addRow("start_minimized_to_tray", self._start_minimized_to_tray)
+
         tray_box = QtWidgets.QGroupBox("Tray behavior")
         tray_box.setLayout(tray_form)
         layout.addWidget(tray_box)
@@ -90,6 +94,7 @@ class SettingsPage(QtWidgets.QWidget):
         self._download_delay.valueChanged.connect(lambda _v: self._schedule_autosave())
         self._close_to_tray.stateChanged.connect(lambda _v: self._schedule_autosave())
         self._minimize_to_tray.stateChanged.connect(lambda _v: self._schedule_autosave())
+        self._start_minimized_to_tray.stateChanged.connect(lambda _v: self._schedule_autosave())
 
     def set_config_path(self, path: Path) -> None:
         self._config_path = path
@@ -117,6 +122,7 @@ class SettingsPage(QtWidgets.QWidget):
             tray = tray if isinstance(tray, dict) else {}
             self._close_to_tray.setChecked(bool(tray.get("close_to_tray", True)))
             self._minimize_to_tray.setChecked(bool(tray.get("minimize_to_tray", False)))
+            self._start_minimized_to_tray.setChecked(bool(tray.get("start_minimized_to_tray", False)))
 
             self._status.setText(f"Loaded settings from {self._config_path}.")
         except Exception as exc:
@@ -148,6 +154,7 @@ class SettingsPage(QtWidgets.QWidget):
             tray = tray if isinstance(tray, dict) else {}
             tray["close_to_tray"] = bool(self._close_to_tray.isChecked())
             tray["minimize_to_tray"] = bool(self._minimize_to_tray.isChecked())
+            tray["start_minimized_to_tray"] = bool(self._start_minimized_to_tray.isChecked())
             ui["tray"] = tray
             data["ui"] = ui
 

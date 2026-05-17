@@ -115,6 +115,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def _minimize_to_tray_enabled(self) -> bool:
         return bool(self._tray_config().get("minimize_to_tray", False))
 
+    def _start_minimized_to_tray_enabled(self) -> bool:
+        return bool(self._tray_config().get("start_minimized_to_tray", False))
+
+    def should_start_minimized_to_tray(self) -> bool:
+        return self._tray is not None and self._start_minimized_to_tray_enabled()
+
     def _init_tray(self) -> None:
         # Tray support is optional and platform-dependent (e.g., some Linux DEs).
         try:
@@ -388,7 +394,10 @@ def main() -> int:
         app.setFont(f)
 
     w = MainWindow()
-    w.show()
+    if w.should_start_minimized_to_tray():
+        w.hide()
+    else:
+        w.show()
     return app.exec()
 
 
