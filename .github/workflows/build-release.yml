@@ -6,7 +6,7 @@ on:
       tag:
         description: "Tag to create (e.g., v0.1.0)"
         required: true
-        default: "v0.1.0"
+        default: "v2.0.0"
         type: string
       force_tag:
         description: "Recreate tag if it already exists"
