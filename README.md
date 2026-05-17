@@ -1,6 +1,6 @@
 # YouTube Playlist Sync
 
-[![Build Release](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/build_v2.yml/badge.svg)](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/build-release.yml)
+[![Build Release](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/build-release.yml/badge.svg)](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/build-release.yml)
 [![Unit tests](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/darkzoul5/YoutubePlaylistDownloader/actions/workflows/unit-tests.yml)
 
 A cross-platform tool for downloading and keeping in sync a local copy of entire YouTube playlists as MP3 or MP4 files, using [yt-dlp](https://github.com/yt-dlp/yt-dlp) & [ffmpeg](https://ffmpeg.org/).
