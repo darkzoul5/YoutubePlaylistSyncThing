@@ -8,7 +8,8 @@
       "url": "https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID_HERE",
       "download_mode": "video",
       "max_download_quality": "1080p",
-      "save_path": "./downloads"
+      "save_path": "./downloads",
+      "name": "my favorite playlist"
     }
   ]
 }

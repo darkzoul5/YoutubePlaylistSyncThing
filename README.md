@@ -42,7 +42,8 @@ Application uses a json config that canbe edited from UI or manually
       "url": "https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID",
       "download_mode": "video",
       "max_download_quality": "1080p",
-      "save_path": "./downloads"
+      "save_path": "./downloads",
+      "name": "my favorite playlist"
     }
   ]
 }

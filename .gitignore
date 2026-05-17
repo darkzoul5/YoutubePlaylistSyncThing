@@ -7,7 +7,7 @@ config/yt-playlist-config.json
 /*/tmp*
 *.code-workspace
 /bin/*
-/app/data
+/db/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
