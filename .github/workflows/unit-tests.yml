@@ -5,9 +5,21 @@ on:
   push:
     branches: 
       - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "ytpl-sync-entry.py"
   pull_request:
     branches:
       - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "ytpl-sync-entry.py"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,10 +34,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
