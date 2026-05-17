@@ -4,7 +4,7 @@ import asyncio
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from PySide6 import QtCore
 

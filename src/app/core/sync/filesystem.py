@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, List, Sequence
+from typing import List, Sequence
 
 from ..models import FilesystemEntry
 

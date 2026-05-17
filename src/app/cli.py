@@ -45,7 +45,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"START: {vid} → {target}")
 
     async def on_completed(payload):
-        pid = payload.get("playlist_id")
         vid = payload.get("video_id")
         target = payload.get("target")
         print(f"OK: {vid} → {target}")

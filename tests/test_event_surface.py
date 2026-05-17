@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from pathlib import Path
 
 from app.core.download.downloader import Downloader
 from app.core.download.queue_manager import DownloadJob
